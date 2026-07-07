@@ -47,10 +47,21 @@ async function main() {
     if (leagueError) throw leagueError;
   }
 
-  // 2) Bereits bekannte Venues laden, um Doppel-Geocoding zu vermeiden
-  const { data: existingVenues, error: venueLoadError } = await supabase.from("venues").select("*");
-  if (venueLoadError) throw venueLoadError;
-  const venueMap = new Map<string, any>((existingVenues ?? []).map((v: any) => [v.address_key, v]));
+  // 2) Bereits bekannte Venues laden, um Doppel-Geocoding zu vermeiden (paginiert,
+  // da PostgREST pro Request standardmaessig max. 1000 Zeilen liefert)
+  const existingVenues: any[] = [];
+  {
+    const PAGE_SIZE = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase.from("venues").select("*").range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      existingVenues.push(...(data ?? []));
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+  }
+  const venueMap = new Map<string, any>(existingVenues.map((v: any) => [v.address_key, v]));
 
   // 3) Spiele je Liga holen
   const allMatches: (Match & { leagueName: string; leagueId: string; leagueSport: string })[] = [];
@@ -128,8 +139,12 @@ async function main() {
   });
 
   if (rows.length > 0) {
-    const { error: matchError } = await supabase.from("matches").upsert(rows);
-    if (matchError) throw matchError;
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      const chunk = rows.slice(i, i + CHUNK_SIZE);
+      const { error: matchError } = await supabase.from("matches").upsert(chunk);
+      if (matchError) throw matchError;
+    }
   }
 
   console.log(`Sync fertig: ${rows.length} Spiele, ${venueMap.size} Venues.`);
