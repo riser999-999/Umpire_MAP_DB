@@ -139,6 +139,24 @@ export default function HomePage() {
           <p style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
             Spielorte Saison 2026
           </p>
+          <div style={{ display: "flex", gap: "14px", marginTop: "8px", flexWrap: "wrap" }}>
+            {[
+              { color: "#2563eb", label: "1./2. Bundesliga, Interleague, Playoffs, Wildcard" },
+              { color: "#16a34a", label: "Andere Ligen" },
+              { color: "#eab308", label: "Softball" },
+            ].map((item) => (
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <span style={{
+                  width: "9px",
+                  height: "9px",
+                  borderRadius: "50%",
+                  backgroundColor: item.color,
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>{item.label}</span>
+              </div>
+            ))}
+          </div>
         </header>
 
         {/* Sport Filter */}
