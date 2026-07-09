@@ -13,6 +13,68 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "/leaflet/marker-shadow.png",
 });
 
+// Klassifikationen, die als "oberste Baseball-Klasse" gelten (blauer Pin).
+// Alles andere Baseball = gruen, jedes Softball-Spiel = gelb (unabhaengig
+// von der Klasse), da Softball farblich klar von Baseball unterscheidbar
+// sein soll.
+const TOP_TIER_KEYWORDS = [
+  "1. bundesliga",
+  "2. bundesliga",
+  "dbl interleague",
+  "dbl wild card race",
+  "playoffs",
+  "playdowns",
+];
+
+const PIN_COLORS = {
+  blue: "#2563eb",
+  green: "#16a34a",
+  yellow: "#eab308",
+} as const;
+
+type PinColorKey = keyof typeof PIN_COLORS;
+
+function matchColorKey(match: Match): PinColorKey {
+  const sport = (match.league?.sport || "").toLowerCase();
+  if (sport.includes("softball")) return "yellow";
+
+  const classification = (match.league?.classification || "").toLowerCase();
+  const isTopTier = TOP_TIER_KEYWORDS.some((k) => classification.includes(k));
+  return isTopTier ? "blue" : "green";
+}
+
+// Bei mehreren Spielen unterschiedlicher Ligen/Sportarten am selben Feld
+// gewinnt diese Prioritaet (1. Bundesliga am wichtigsten sichtbar, dann
+// Softball, dann sonstige Ligen).
+const COLOR_PRIORITY: PinColorKey[] = ["blue", "yellow", "green"];
+
+function groupColorKey(matches: Match[]): PinColorKey {
+  const present = new Set(matches.map(matchColorKey));
+  return COLOR_PRIORITY.find((c) => present.has(c)) ?? "green";
+}
+
+const iconCache = new Map<PinColorKey, L.DivIcon>();
+function coloredPinIcon(colorKey: PinColorKey): L.DivIcon {
+  const cached = iconCache.get(colorKey);
+  if (cached) return cached;
+  const color = PIN_COLORS[colorKey];
+  const svg = `
+    <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12.5 0C5.6 0 0 5.6 0 12.5 0 21.9 12.5 41 12.5 41S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="${color}" stroke="#0f172a" stroke-width="1.5"/>
+      <circle cx="12.5" cy="12.5" r="5" fill="#0f172a" fill-opacity="0.35"/>
+    </svg>
+  `;
+  const icon = L.divIcon({
+    html: svg,
+    className: "colored-pin-icon",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+  });
+  iconCache.set(colorKey, icon);
+  return icon;
+}
+
 interface FieldGroup {
   fieldKey: string;
   field: NonNullable<Match["field"]>;
@@ -103,7 +165,7 @@ export default function MapView({ matches, selectedDay }: Props) {
         />
       );
 
-      const marker = L.marker([lat, lng]);
+      const marker = L.marker([lat, lng], { icon: coloredPinIcon(groupColorKey(group.matches)) });
       marker.bindPopup(popupHtml, {
         maxWidth: 360,
         className: "umpire-popup",
@@ -121,6 +183,10 @@ export default function MapView({ matches, selectedDay }: Props) {
     <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
       <div ref={mapContainerRef} style={{ flex: 1, minHeight: "400px" }} />
       <style>{`
+        .colored-pin-icon {
+          background: transparent;
+          border: none;
+        }
         .umpire-popup .leaflet-popup-content-wrapper {
           background: #1e293b;
           border: 1px solid #334155;
