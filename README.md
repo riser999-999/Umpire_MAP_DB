@@ -56,7 +56,6 @@ synchronisiert; das Frontend liest ausschliesslich aus Supabase.
 4. Unter **Environment Variables** vor dem ersten Deploy eintragen:
    - `NEXT_PUBLIC_SUPABASE_URL` (Project URL aus Schritt 1)
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (anon public Key aus Schritt 1)
-   - `BSM_API_KEY` (nur fuer `/api/debug`, optional)
 5. **Deploy** klicken. Nach ein paar Minuten ist die App unter der
    vergebenen `*.vercel.app`-Domain erreichbar.
 6. Jeder Push auf den main-Branch loest danach automatisch ein neues
