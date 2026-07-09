@@ -116,7 +116,7 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>Umpire Map – Spielorte Übersicht</title>
+        <title>Baseball und Softball Map – Spielorte Übersicht</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -134,7 +134,7 @@ export default function HomePage() {
           flexShrink: 0,
         }}>
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.5px" }}>
-            ⚾ UMPIRE MAP
+            ⚾🥎 BASEBALL UND SOFTBALL MAP
           </h1>
           <p style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
             Spielorte Saison 2026
